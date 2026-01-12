@@ -1,0 +1,75 @@
+﻿<Window x:Class="wpfstudy.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MiniBoard" Height="450" Width="800">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,10">
+            <Button Content="새로고침" Width="100" Margin="0,0,10,0"
+                    Command="{Binding LoadCommand}"/>
+            <Button Content="샘플 글 추가" Width="120" Margin="0,0,10,0"
+                    Command="{Binding AddDummyCommand}"/>
+            <Button Content="삭제" Width="100"
+                    Command="{Binding DeleteCommand}"/>
+        </StackPanel>
+
+        <ListBox Grid.Row="1" Grid.Column="0"
+                 ItemsSource="{Binding Posts}"
+                 SelectedItem="{Binding SelectedPost, Mode=TwoWay}"
+                 DisplayMemberPath="Title"/>
+
+        <Border Grid.Row="1" Grid.Column="1"
+                BorderBrush="Gray" BorderThickness="1"
+                Padding="10" Margin="10,0,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 작성 폼 -->
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="새 게시글 작성" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+
+                    <TextBlock Text="제목"/>
+                    <TextBox Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                    <TextBlock Text="작성자"/>
+                    <TextBox Text="{Binding NewAuthor, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                    <TextBlock Text="내용"/>
+                    <TextBox Text="{Binding NewContent, UpdateSourceTrigger=PropertyChanged}"
+                            AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" Margin="0,0,0,8"/>
+
+                    <Button Content="저장" Width="100"
+                            HorizontalAlignment="Left"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+
+                <!-- 선택된 글 상세보기 -->
+                <Border Grid.Row="2" BorderBrush="LightGray" BorderThickness="1" Padding="10">
+                    <Border.DataContext>
+                        <Binding Path="SelectedPost"/>
+                    </Border.DataContext>
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding Title, TargetNullValue=게시글을 선택하세요}"
+                                FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding Author}" Foreground="Gray" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding Content}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
