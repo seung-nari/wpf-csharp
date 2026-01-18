@@ -43,16 +43,23 @@
         <!-- Right: image area -->
         <Border Grid.Column="2" Grid.Row="2" BorderBrush="#808080" BorderThickness="1" CornerRadius="2">
             <ScrollViewer x:Name="SvImage"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto"
-                          Background="#1E1E1E">
-                <Grid>
+              HorizontalScrollBarVisibility="Auto"
+              VerticalScrollBarVisibility="Auto"
+              Background="#1E1E1E"
+              PreviewMouseWheel="SvImage_PreviewMouseWheel"
+              CanContentScroll="False">
+                <Grid x:Name="ImgHost">
+                    <Grid.LayoutTransform>
+                        <ScaleTransform x:Name="ZoomTf" ScaleX="1" ScaleY="1"/>
+                    </Grid.LayoutTransform>
+
                     <Image x:Name="ImgRaster"
-                           Stretch="Uniform"
-                           SnapsToDevicePixels="True"
-                           RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+               Stretch="None"
+               RenderOptions.BitmapScalingMode="NearestNeighbor"
+               SnapsToDevicePixels="True"/>
                 </Grid>
             </ScrollViewer>
+
         </Border>
 
         <!-- Status bar -->

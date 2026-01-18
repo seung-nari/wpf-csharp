@@ -28,6 +28,9 @@ namespace RasterLab
         // 3) 좌표 변환용 GeoTransform (나중에 좌표 표시할 때 사용)
         private double[] _gt = new double[6];
 
+        // 전역으로 빼버려 그냥
+        private WriteableBitmap bmp;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -84,6 +87,12 @@ namespace RasterLab
             string meta = BuildMetadataText(path, _ds, _gt);
             TxtMeta.Text = meta;
 
+            ShowRasterPreview();
+
+            
+            ImgRaster.Source = bmp;
+            // 켰을때 어느정도 자동 맞춤
+            FitToWindow();
             // 상태바가 있으면 표시 (없으면 지워도 됨)
             // TxtStatus.Text = "Opened: " + path;
         }
@@ -263,5 +272,131 @@ namespace RasterLab
 
             _gdalInited = true;
         }
+
+        // 이미지 그려주기
+        private void ShowRasterPreview()
+        {
+            if (_ds == null || _band1 == null) return;
+
+            int w = _ds.RasterXSize;
+            int h = _ds.RasterYSize;
+
+            if (_band1.DataType != DataType.GDT_Byte)
+            {
+                MessageBox.Show("지금 미리보기는 GDT_Byte(8bit)만 지원합니다. 현재: " + _band1.DataType);
+                return;
+            }
+
+            // 1) 픽셀 전체 읽기
+            byte[] src = new byte[w * h];
+            _band1.ReadRaster(0, 0, w, h, src, w, h, 0, 0);
+
+            // 2) 너무 어두우면 자동 스트레치(선택)
+            //    네 XAML에 체크박스가 없으니 일단 항상 스트레치로 가자.
+            byte[] dst = StretchToByte(src);
+
+            // 3) WPF 비트맵 생성 후 복사
+            bmp = new WriteableBitmap(w, h, 96, 96, PixelFormats.Gray8, null);
+            int stride = w; // Gray8: 1 byte per pixel
+            bmp.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
+
+            ImgRaster.Source = bmp;
+
+            System.Diagnostics.Debug.WriteLine($"ImgRaster.Source is null? {ImgRaster.Source == null}");
+        }
+
+        private byte[] StretchToByte(byte[] src)
+        {
+            int min = 255, max = 0;
+
+            for (int i = 0; i < src.Length; i++)
+            {
+                int v = src[i];
+                if (v < min) min = v;
+                if (v > max) max = v;
+            }
+
+            if (max <= min) return src;
+
+            int range = max - min;
+            byte[] dst = new byte[src.Length];
+
+            for (int i = 0; i < src.Length; i++)
+            {
+                int scaled = (src[i] - min) * 255 / range;
+                if (scaled < 0) scaled = 0;
+                if (scaled > 255) scaled = 255;
+                dst[i] = (byte)scaled;
+            }
+
+            return dst;
+        }
+
+
+        // 마우스 휠로 확대/축소 (스크롤바 기반으로 이동 유지)
+        private void SvImage_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Ctrl 없이 휠: 기본 스크롤 동작 유지
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0)
+                return;
+
+            e.Handled = true; // ScrollViewer 기본 휠 스크롤 막기
+
+            double oldScale = ZoomTf.ScaleX;
+            double zoomFactor = (e.Delta > 0) ? 1.1 : 1.0 / 1.1;
+
+            double newScale = oldScale * zoomFactor;
+
+            // 너무 작아/커지는 거 방지
+            if (newScale < 0.05) newScale = 0.05;
+            if (newScale > 50) newScale = 50;
+
+            // 마우스가 가리키는 "현재 화면상의 위치"를 기준으로 줌 유지
+            Point mouseOnContent = e.GetPosition(ImgHost);
+
+            double offsetX = SvImage.HorizontalOffset;
+            double offsetY = SvImage.VerticalOffset;
+
+            // 줌 전: 마우스가 가리키는 콘텐츠 좌표(스크롤 포함)
+            double absX = mouseOnContent.X + offsetX;
+            double absY = mouseOnContent.Y + offsetY;
+
+            // 스케일 적용
+            ZoomTf.ScaleX = newScale;
+            ZoomTf.ScaleY = newScale;
+
+            // 레이아웃 갱신이 필요(Extent 계산 반영)
+            SvImage.UpdateLayout();
+
+            // 줌 후에도 같은 abs 좌표가 마우스 아래 오도록 offset 재계산
+            SvImage.ScrollToHorizontalOffset(absX * (newScale / oldScale) - mouseOnContent.X);
+            SvImage.ScrollToVerticalOffset(absY * (newScale / oldScale) - mouseOnContent.Y);
+        }
+
+        private double _zoom = 1.0;
+
+        // “처음 열면 화면에 맞춰서 보이기” (Fit)
+        private void FitToWindow()
+        {
+            if (ImgRaster.Source == null) return;
+
+            // ScrollViewer의 실제 표시 영역(스크롤바/테두리 제외)
+            double vw = SvImage.ViewportWidth;
+            double vh = SvImage.ViewportHeight;
+
+            if (vw <= 0 || vh <= 0) return; // 아직 레이아웃 전이면 0일 수 있음
+
+            double iw = ImgRaster.Source.Width;
+            double ih = ImgRaster.Source.Height;
+
+            double scaleX = vw / iw;
+            double scaleY = vh / ih;
+
+            _zoom = Math.Min(scaleX, scaleY);
+
+            ZoomTf.ScaleX = _zoom;
+            ZoomTf.ScaleY = _zoom;
+        }
+
     }
 }
