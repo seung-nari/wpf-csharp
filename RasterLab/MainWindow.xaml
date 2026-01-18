@@ -28,35 +28,65 @@
             <CheckBox x:Name="ChkAutoStretch" Content="Auto Stretch" VerticalAlignment="Center" IsChecked="True"/>
         </StackPanel>
 
-        <!-- Left: metadata -->
-        <Border Grid.Column="0" Grid.Row="2" BorderBrush="#808080" BorderThickness="1" CornerRadius="2">
-            <TextBox x:Name="TxtMeta"
-                     Margin="8"
-                     FontFamily="Consolas"
-                     FontSize="12"
-                     TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto"
-                     HorizontalScrollBarVisibility="Auto"
-                     IsReadOnly="True"/>
-        </Border>
+        <!-- Left: 2-split panel -->
+        <Grid Grid.Column="0" Grid.Row="2" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
+                <!-- 메타데이터 -->
+                <RowDefinition Height="*"/>
+                <!-- 픽셀 정보 -->
+            </Grid.RowDefinitions>
+
+            <!-- Meta -->
+            <Border Grid.Row="0"
+                    Margin="0,0,0,8"
+                    BorderBrush="#808080"
+                    BorderThickness="1"
+                    CornerRadius="2">
+                <TextBox x:Name="TxtMeta"
+                         Margin="8"
+                         FontFamily="Consolas"
+                         FontSize="12"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         IsReadOnly="True"/>    
+            </Border>
+
+            <!-- Pixel info -->
+            <Border Grid.Row="1"
+                    BorderBrush="#808080"
+                    BorderThickness="1"
+                    CornerRadius="2">
+                <TextBlock x:Name="TxtPixel"
+                           Text="Pixel: -"
+                           FontFamily="Consolas"
+                           Margin="6"/>
+            </Border>
+        </Grid>
 
         <!-- Right: image area -->
         <Border Grid.Column="2" Grid.Row="2" BorderBrush="#808080" BorderThickness="1" CornerRadius="2">
             <ScrollViewer x:Name="SvImage"
-              HorizontalScrollBarVisibility="Auto"
-              VerticalScrollBarVisibility="Auto"
-              Background="#1E1E1E"
-              PreviewMouseWheel="SvImage_PreviewMouseWheel"
-              CanContentScroll="False">
-                <Grid x:Name="ImgHost">
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          Background="#1E1E1E"
+                          PreviewMouseWheel="SvImage_PreviewMouseWheel"
+                          CanContentScroll="False">
+                <Grid x:Name="ImgHost"
+                      Background="Transparent"
+                      MouseMove="ImgHost_MouseMove"
+                      MouseLeave="ImgHost_MouseLeave">
                     <Grid.LayoutTransform>
                         <ScaleTransform x:Name="ZoomTf" ScaleX="1" ScaleY="1"/>
                     </Grid.LayoutTransform>
 
                     <Image x:Name="ImgRaster"
-               Stretch="None"
-               RenderOptions.BitmapScalingMode="NearestNeighbor"
-               SnapsToDevicePixels="True"/>
+                           Stretch="None"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                           SnapsToDevicePixels="True"/>
                 </Grid>
             </ScrollViewer>
 
