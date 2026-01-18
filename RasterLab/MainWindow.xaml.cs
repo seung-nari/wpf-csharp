@@ -39,7 +39,8 @@ namespace RasterLab
         {
             // GDAL 드라이버 등록 (중요)
             // 어떤 포맷을 열 수 있는지 GDAL이 준비하는 단계
-            //Gdal.AllRegister();
+            // Gdal.AllRegister();
+            // Gdal.AllRegister() 대신 InitGdal() 함수를 만들어서 씀
             InitGdal();
 
             // 초기 상태 표시 (XAML에서 TxtStatus가 없으면 이 줄은 지워도 됨...)
@@ -68,6 +69,7 @@ namespace RasterLab
             }
 
             // 1번 밴드 가져오기
+            // 이 부분 관련해서는 summation.md에 추가 설명
             _band1 = _ds.GetRasterBand(1);
             if( _band1 == null)
             {
@@ -200,7 +202,6 @@ namespace RasterLab
         }
 
         // Gdal.Allregister 오류 잡기 위해
-
         private static bool _gdalInited = false;
 
         private static void InitGdal()
@@ -208,9 +209,11 @@ namespace RasterLab
             if (_gdalInited) return;
 
             // exe가 있는 폴더
+            // workspace\RasterLab\bin\Debug\net8.0-windows
             string baseDir = AppContext.BaseDirectory;
 
-            // 너 스샷 기준: baseDir\gdal\...
+            // 내 프로젝트 파일 구조 기준 : baseDir\gdal\...
+            // workspace\RasterLab\bin\Debug\net8.0-windows\gdal\data
             string gdalRoot = Path.Combine(baseDir, "gdal");
 
             string gdalData = Path.Combine(gdalRoot, "data");
