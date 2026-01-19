@@ -474,5 +474,30 @@ namespace RasterLab
 
             return band.DataType.ToString();
         }
+
+        // GeoTransform / CRS / Raster 크기 로그로 찍기
+        private void ImgHost_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_ds == null) return;
+
+            Point p = e.GetPosition(ImgHost);
+
+            int col = (int)p.X;
+            int row = (int)p.Y;
+
+            double[] gt = new double[6];
+            _ds.GetGeoTransform(gt);
+
+            // 픽셀 중심 기준
+            double px = col + 0.5;
+            double py = row + 0.5;
+
+            double geoX = gt[0] + px * gt[1] + py * gt[2];
+            double geoY = gt[3] + px * gt[4] + py * gt[5];
+
+            System.Diagnostics.Debug.WriteLine($"[CLICK] p=({p.X:0.###},{p.Y:0.###}) -> col,row=({col},{row}) -> geo=({geoX:0.###},{geoY:0.###})");
+
+        }
+
     }
 }

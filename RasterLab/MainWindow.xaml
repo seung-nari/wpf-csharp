@@ -76,7 +76,8 @@
                 <Grid x:Name="ImgHost"
                       Background="Transparent"
                       MouseMove="ImgHost_MouseMove"
-                      MouseLeave="ImgHost_MouseLeave">
+                      MouseLeave="ImgHost_MouseLeave"
+                      MouseLeftButtonDown="ImgHost_MouseLeftButtonDown">
                     <Grid.LayoutTransform>
                         <ScaleTransform x:Name="ZoomTf" ScaleX="1" ScaleY="1"/>
                     </Grid.LayoutTransform>
