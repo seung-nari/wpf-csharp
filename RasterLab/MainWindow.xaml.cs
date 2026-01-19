@@ -405,43 +405,41 @@ namespace RasterLab
         // 실시간 픽셀 읽기
         private void ImgHost_MouseMove(object sender, MouseEventArgs e)
         {
-            if(_ds == null || _band1 == null || ImgRaster.Source == null) return;
+            //System.Diagnostics.Debug.WriteLine("MOVE 1");
+            
+            if (_ds == null || _band1 == null || ImgRaster.Source == null) return;
 
-            // 1) 마우스 위치(ImgHost 기준)
+            // 좌표 계산
             Point p = e.GetPosition(ImgHost);
 
-            // 2) 줌(LayoutTransform) 보정 : "원본 픽셀 좌표계"로 환산
-            double zx = ZoomTf.ScaleX;
-            double zy = ZoomTf.ScaleY;
+            //System.Diagnostics.Debug.WriteLine($"MOVE 3: p=({p.X},{p.Y}) zoom=({ZoomTf.ScaleX},{ZoomTf.ScaleY})");
 
-            if(zx <= 0 || zy <= 0) return;
+            double zoom = ZoomTf.ScaleX;
+            
+            int col = (int)p.X;
+            int row = (int)p.Y;
 
-            double x = p.X / zx;
-            double y = p.Y / zy;
-
-            // 3) 픽셀 좌표(col, row)
-            int col = (int)Math.Floor(x);
-            int row = (int)Math.Floor(y);
-
-            // 4) 이미지 범위 체크
-            int w = _ds.RasterXSize;
-            int h = _ds.RasterYSize;
-            if(col < 0 || col >= w || row < 0 || row >= h)
-            {
-                TxtPixel.Text = $"Pixel: (out) col={col}, row={row}";
-                return;
-            }
-
-            // 5) 같은 픽셀이면 다시 안 읽음(성능)
+            // 같은 픽셀 반복이면 ReadRaster 생략
             if (col == _lastCol && row == _lastRow) return;
-
             _lastCol = col;
             _lastRow = row;
 
-            // 6) 픽셀 값 읽기(현재는 Band1만)
-            string v = ReadPixelAsString(_band1, col, row);
+            // 먼저 좌표 텍스트 업데이트
+            //TxtPixel.Text = $"Pixel: col={col}, row={row}";
 
-            TxtPixel.Text = $"Pixel: (out) col={col}, row={row}, band1={v}";
+            // 범위 체크
+            if (col < 0 || row < 0 || col >= _ds.RasterXSize || row >= _ds.RasterYSize)
+            {
+                TxtPixel.Text = "Pixel: -";
+                return;
+            }
+
+            // 픽셀 값 읽기(Byte 기준)
+            byte[] buffer = new byte[1];
+            _band1.ReadRaster(col, row, 1, 1, buffer, 1, 1, 0, 0);
+
+            TxtPixel.Text = $"Pixel: col={col}, row={row}, value={buffer[0]}";
+            
         }
 
         private void ImgHost_MouseLeave(object sender, EventArgs e)
