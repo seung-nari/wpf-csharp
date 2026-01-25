@@ -2,7 +2,9 @@
 using OSGeo.GDAL;                   // GDAL C# 바인딩
 using System;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -34,6 +36,13 @@ namespace RasterLab
         // 실시간 픽셀 읽기
         private int _lastCol = -1;
         private int _lastRow = -1;
+
+        // 스포틀 (ms)
+        private const int HoverIntervalMs = 40;
+        private long _lastHoverTick = 0;
+
+        // 비동기 취소
+        private CancellationTokenSource? _hoverCts;
 
         public MainWindow()
         {
@@ -181,7 +190,6 @@ namespace RasterLab
             {
                 byte[] buffer = new byte[1];
 
-                //
                 _band1.ReadRaster(col, row, 1, 1, buffer, 1, 1, 0, 0);
 
                 byte value = buffer[0];
@@ -403,43 +411,76 @@ namespace RasterLab
         }
 
         // 실시간 픽셀 읽기
-        private void ImgHost_MouseMove(object sender, MouseEventArgs e)
+        private async void ImgHost_MouseMove(object sender, MouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("MOVE 1");
-            
             if (_ds == null || _band1 == null || ImgRaster.Source == null) return;
+
+            // 스로틀
+            long now = Environment.TickCount64;
+            if (now - _lastHoverTick < HoverIntervalMs) return;
+            _lastHoverTick = now;
 
             // 좌표 계산
             Point p = e.GetPosition(ImgHost);
 
             //System.Diagnostics.Debug.WriteLine($"MOVE 3: p=({p.X},{p.Y}) zoom=({ZoomTf.ScaleX},{ZoomTf.ScaleY})");
 
-            double zoom = ZoomTf.ScaleX;
-            
             int col = (int)p.X;
             int row = (int)p.Y;
+
+            // 범위 체크
+            if (col < 0 || row < 0 || col >= _ds.RasterXSize || row >= _ds.RasterYSize)
+            {
+                TxtPixel.Text = "Pixel: -";
+                _lastCol = -1;
+                _lastRow = -1;
+                if (_hoverCts != null) _hoverCts.Cancel();
+                return;
+            }
 
             // 같은 픽셀 반복이면 ReadRaster 생략
             if (col == _lastCol && row == _lastRow) return;
             _lastCol = col;
             _lastRow = row;
 
-            // 먼저 좌표 텍스트 업데이트
-            //TxtPixel.Text = $"Pixel: col={col}, row={row}";
-
-            // 범위 체크
-            if (col < 0 || row < 0 || col >= _ds.RasterXSize || row >= _ds.RasterYSize)
-            {
-                TxtPixel.Text = "Pixel: -";
-                return;
-            }
-
             // 픽셀 값 읽기(Byte 기준)
-            byte[] buffer = new byte[1];
-            _band1.ReadRaster(col, row, 1, 1, buffer, 1, 1, 0, 0);
+            // value 값이 0 ~ 9 까지 나올텐데 0은 검정 9는 흰색 정도이다.
+            //byte[] buffer = new byte[1];
+            //_band1.ReadRaster(col, row, 1, 1, buffer, 1, 1, 0, 0);
 
-            TxtPixel.Text = $"Pixel: col={col}, row={row}, value={buffer[0]}";
-            
+            var (geoX, geoY) = PixelCenterToGeo(col, row);
+            TxtPixel.Text = $"Pixel: col={col}, row={row}\nGeo : X={geoX:0.###}, Y={geoY:0.###}\nValue: ...";
+
+            // 이전 작업 취소
+            if (_hoverCts != null) _hoverCts.Cancel();
+            _hoverCts = new CancellationTokenSource();
+            CancellationToken token = _hoverCts.Token;
+
+            try
+            {
+                // 백그라운드에서 value 읽기
+                string valueStr = await Task.Run(delegate
+                {
+                    token.ThrowIfCancellationRequested();
+                    return ReadPixelAsString(_band1, col, row);
+                }, token);
+
+                if(token.IsCancellationRequested) return;
+
+                // 최신 좌표인지 확인(늦게 끝난 작업이 덮어쓰는 것 방지)
+                if (col != _lastCol || row != _lastRow) return;
+
+                TxtPixel.Text = $"Pixel: col={col}, row={row}\nGeo : X={geoX:0.###}, Y={geoY:0.###}\nValue: {valueStr}";
+            } 
+            catch (OperationCanceledException)
+            {
+                // 무시 (마우스가 움직이면 취소되는게 정상)
+            }
+            catch (Exception ex)
+            {
+                TxtPixel.Text = $"Pixel: col={col}, row={row}\nValue read error: {ex.Message}";
+            }
         }
 
         private void ImgHost_MouseLeave(object sender, EventArgs e)
@@ -447,6 +488,8 @@ namespace RasterLab
             TxtPixel.Text = "Pixel: -";
             _lastCol = -1;
             _lastRow = -1;
+
+            if(_hoverCts != null) _hoverCts.Cancel();
         }
 
         private string ReadPixelAsString(Band band, int col, int row)
@@ -499,5 +542,19 @@ namespace RasterLab
 
         }
 
+        // 픽셀 -> geo(중심)
+        private (double x, double y) PixelCenterToGeo(int col, int row)
+        {
+            double[] gt = new double[6];
+            _ds.GetGeoTransform(gt);
+
+            double px = col + 0.5;
+            double py = row + 0.5;
+
+            double geoX = gt[0] + px * gt[1] + py * gt[2];
+            double geoY = gt[3] + px * gt[4] + py * gt[5];
+
+            return (geoX, geoY);
+        }
     }
 }
