@@ -26,6 +26,14 @@
             <Button x:Name="BtnPixelTest" Content="Pixel Test" Width="110" Height="32" Margin="0,0,12,0"
                     Click="BtnPixelTest_Click"/>
             <CheckBox x:Name="ChkAutoStretch" Content="Auto Stretch" VerticalAlignment="Center" IsChecked="True"/>
+
+            <!-- 구분용 여백 -->
+            <Border Width="1" Height="24" Background="#808080" Margin="0,0,16,0" VerticalAlignment="Center"/>
+            
+            <!-- 좌표 복사 버튼 -->
+            <Button x:Name="BtnCopyPixel" Content="Copy Pixel" Width="110" Height="32" Margin="0,0,8,0" Click="BtnCopyPixel_Click"/>
+            <Button x:Name="BtnCopyGeo" Content="Copy Geo" Width="110" Height="32" Margin="0,0,8,0" Click="BtnCopyGeo_Click"/>
+            <Button x:Name="BtnCopyAll" Content="Copy All" Width="110" Height="32" Click="BtnCopyAll_Click"/>
         </StackPanel>
 
         <!-- Left: 2-split panel -->

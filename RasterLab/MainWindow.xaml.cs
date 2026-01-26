@@ -44,6 +44,14 @@ namespace RasterLab
         // 비동기 취소
         private CancellationTokenSource? _hoverCts;
 
+        // 좌표 복사
+        private int _curCol = -1;
+        private int _curRow = -1;
+        private double _curGeoX = 0;
+        private double _curGeoY = 0;
+        private string _curValue = "";
+        private bool _hasCoord = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -452,6 +460,13 @@ namespace RasterLab
             var (geoX, geoY) = PixelCenterToGeo(col, row);
             TxtPixel.Text = $"Pixel: col={col}, row={row}\nGeo : X={geoX:0.###}, Y={geoY:0.###}\nValue: ...";
 
+            // 좌표 복사를 위해 Hover 즉시 (UI 스레드)
+            _curCol = col;
+            _curRow = row;
+            _curGeoX = geoX;
+            _curGeoY = geoY;
+            _hasCoord = true;
+
             // 이전 작업 취소
             if (_hoverCts != null) _hoverCts.Cancel();
             _hoverCts = new CancellationTokenSource();
@@ -472,7 +487,10 @@ namespace RasterLab
                 if (col != _lastCol || row != _lastRow) return;
 
                 TxtPixel.Text = $"Pixel: col={col}, row={row}\nGeo : X={geoX:0.###}, Y={geoY:0.###}\nValue: {valueStr}";
-            } 
+
+                // 좌표 복사 ReadRaster 완료 후 (비동기 결과)
+                _curValue = valueStr;
+            }
             catch (OperationCanceledException)
             {
                 // 무시 (마우스가 움직이면 취소되는게 정상)
@@ -490,6 +508,8 @@ namespace RasterLab
             _lastRow = -1;
 
             if(_hoverCts != null) _hoverCts.Cancel();
+
+            // _hasCoord / _curXXX 는 건드리지 않음
         }
 
         private string ReadPixelAsString(Band band, int col, int row)
@@ -555,6 +575,31 @@ namespace RasterLab
             double geoY = gt[3] + px * gt[4] + py * gt[5];
 
             return (geoX, geoY);
+        }
+
+        // 좌표 복사 함수
+        private void BtnCopyPixel_Click(object sender, EventArgs e)
+        {
+            if (!_hasCoord) return;
+            Clipboard.SetText(_curCol + "," + _curRow);
+        }
+
+        private void BtnCopyGeo_Click(object sender, EventArgs e)
+        {
+            if (!_hasCoord) return;
+            Clipboard.SetText(_curGeoX.ToString("0.###") + "," + _curGeoY.ToString("0.###"));
+        }
+
+        private void BtnCopyAll_Click(object sender, EventArgs e)
+        {
+            if (!_hasCoord) return;
+
+            // col, row, x, y, value (value 없으면 빈칸)
+            string x = _curGeoX.ToString("0.###");
+            string y = _curGeoY.ToString("0.###");
+            string v = _curValue ?? "";
+
+            Clipboard.SetText(_curCol + "," + _curRow + "," + x + "," + y + "," + v);
         }
     }
 }
