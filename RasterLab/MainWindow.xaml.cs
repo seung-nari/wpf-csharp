@@ -587,7 +587,15 @@ namespace RasterLab
         private void BtnCopyGeo_Click(object sender, EventArgs e)
         {
             if (!_hasCoord) return;
-            Clipboard.SetText(_curGeoX.ToString("0.###") + "," + _curGeoY.ToString("0.###"));
+
+            // Clipboard.SetText(_curGeoX.ToString("0.###") + "," + _curGeoY.ToString("0.###"));
+            // 윈도우 클립보드가 잠깐 다른 프로세스에 의해 잠겨서 나는 에러 자주 발생
+            // Clipboard.SetText에서 예외 처리
+
+            string s = _curCol + "," + _curRow;
+
+            if (!TrySetClipboardText(s))
+                MessageBox.Show("클립보드가 다른 프로그램에서 사용 중입니다. 잠시 후 다시 시도해주세요.");
         }
 
         private void BtnCopyAll_Click(object sender, EventArgs e)
@@ -601,5 +609,23 @@ namespace RasterLab
 
             Clipboard.SetText(_curCol + "," + _curRow + "," + x + "," + y + "," + v);
         }
+
+        // Clipboard.SetText 예외처리 하기 위해 함수 추가
+        private bool TrySetClipboardText(string text)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    Clipboard.SetText(text);
+                    return true;
+                }
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    System.Threading.Thread.Sleep(30);
+                }
+            }
+            return false;
+        }    
     }
 }
