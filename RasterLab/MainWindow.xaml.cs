@@ -617,12 +617,14 @@ namespace RasterLab
             {
                 try
                 {
-                    Clipboard.SetText(text);
+                    //Clipboard.SetText(text);
+                    // 두번째 인자 true = 클립보드에 완전히 복사될 때까지 유지(복사 안정화)
+                    Clipboard.SetDataObject(text, true);
                     return true;
                 }
                 catch (System.Runtime.InteropServices.COMException)
                 {
-                    System.Threading.Thread.Sleep(30);
+                    System.Threading.Thread.Sleep(50);
                 }
             }
             return false;
