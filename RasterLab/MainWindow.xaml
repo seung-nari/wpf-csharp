@@ -66,10 +66,26 @@
                     BorderBrush="#808080"
                     BorderThickness="1"
                     CornerRadius="2">
-                <TextBlock x:Name="TxtPixel"
-                           Text="Pixel: -"
-                           FontFamily="Consolas"
-                           Margin="6"/>
+                <StackPanel Margin="6">
+                    <!-- Hover 정보 -->
+                    <TextBlock x:Name="TxtPixel"
+                               Text="Pixel: -"
+                               FontFamily="Consolas"
+                               Margin="6"/>
+                    
+                    <!-- 구분선 (선택) -->
+                    <Separator Margin="0,4,0,4"/>
+                    
+                    <!-- Click LOCK 정보 -->
+                    <TextBlock Text="Locked Geo:"
+                               FontFamily="Consolas"
+                               FontWeight="Bold"
+                               Margin="0,0,0,2"/>
+
+                    <TextBlock x:Name="TxtLockedGeo"
+                               Text="-"
+                               FontFamily="Consolas"/>
+                </StackPanel>
             </Border>
         </Grid>
 

@@ -563,6 +563,9 @@ namespace RasterLab
             System.Diagnostics.Debug.WriteLine($"[CLICK] p=({p.X:0.###},{p.Y:0.###}) -> col,row=({col},{row}) -> geo=({geoX:0.###},{geoY:0.###})");
 
             ShowClickMarker(col, row);
+
+            // 현재 클릭되어있는 X, Y값 보여주기
+            TxtLockedGeo.Text = _curGeoX.ToString("0.###") + "," + _curGeoY.ToString("0.###");
         }
 
         // 픽셀 -> geo(중심)
@@ -595,10 +598,12 @@ namespace RasterLab
             // 윈도우 클립보드가 잠깐 다른 프로세스에 의해 잠겨서 나는 에러 자주 발생
             // Clipboard.SetText에서 예외 처리
 
-            string s = _curCol + "," + _curRow;
+            string s = _curGeoX.ToString("0.###") + "," + _curGeoY.ToString("0.###");
 
             if (!TrySetClipboardText(s))
-                MessageBox.Show("클립보드가 다른 프로그램에서 사용 중입니다. 잠시 후 다시 시도해주세요.");
+            {
+                MessageBox.Show("클립보드가 다른 프로그램에서 사용 중입니다. 잠시 후 다시 시도해주세요.", "Clipboard Busy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void BtnCopyAll_Click(object sender, EventArgs e)
