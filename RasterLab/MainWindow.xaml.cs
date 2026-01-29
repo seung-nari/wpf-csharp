@@ -587,7 +587,13 @@ namespace RasterLab
         private void BtnCopyPixel_Click(object sender, EventArgs e)
         {
             if (!_hasCoord) return;
-            Clipboard.SetText(_curCol + "," + _curRow);
+
+            string s = _curCol + "," + _curRow;
+
+            if (!TrySetClipboardText(s))
+            {
+                MessageBox.Show("클립보드가 다른 프로그램에서 사용 중입니다. 잠시 후 다시 시도해주세요.", "Clipboard Busy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void BtnCopyGeo_Click(object sender, EventArgs e)
@@ -610,12 +616,17 @@ namespace RasterLab
         {
             if (!_hasCoord) return;
 
-            // col, row, x, y, value (value 없으면 빈칸)
-            string x = _curGeoX.ToString("0.###");
-            string y = _curGeoY.ToString("0.###");
-            string v = _curValue ?? "";
+            string s =
+                _curCol.ToString() + "," +
+                _curRow.ToString() + "," +
+                _curGeoX.ToString("0.###") + "," +
+                _curGeoY.ToString("0.###") + "," +
+                (_curValue ?? "");
 
-            Clipboard.SetText(_curCol + "," + _curRow + "," + x + "," + y + "," + v);
+            if (!TrySetClipboardText(s))
+            {
+                MessageBox.Show("클립보드가 다른 프로그램에서 사용 중입니다. 잠시 후 다시 시도해주세요.");
+            }
         }
 
         // Clipboard.SetText 예외처리 하기 위해 함수 추가
