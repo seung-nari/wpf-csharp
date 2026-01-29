@@ -55,6 +55,8 @@ namespace RasterLab
         public MainWindow()
         {
             InitializeComponent();
+
+            HideClickMarker();
         }
 
         // Open 버튼 클릭: 파일 선택 -> Dataset 열기 -> 메타데이터 표시
@@ -560,6 +562,7 @@ namespace RasterLab
 
             System.Diagnostics.Debug.WriteLine($"[CLICK] p=({p.X:0.###},{p.Y:0.###}) -> col,row=({col},{row}) -> geo=({geoX:0.###},{geoY:0.###})");
 
+            ShowClickMarker(col, row);
         }
 
         // 픽셀 -> geo(중심)
@@ -611,6 +614,7 @@ namespace RasterLab
         }
 
         // Clipboard.SetText 예외처리 하기 위해 함수 추가
+        // Note: Clipboard copy may fail when remote desktop tools with clipboard sync are active.
         private bool TrySetClipboardText(string text)
         {
             for (int i = 0; i < 10; i++)
@@ -629,5 +633,27 @@ namespace RasterLab
             }
             return false;
         }    
+
+        private void ShowClickMarker(int col, int row)
+        {
+            // 픽셀 중심에 찍고 싶으면 +0.5
+            double x = col + 0.5;
+            double y = row + 0.5;
+
+            // Ellipse를 중심 정렬하려고 반지름만큼 빼기
+            double rX = EllClick.Width / 2.0;
+            double rY = EllClick.Height / 2.0;
+
+            Canvas.SetLeft(EllClick, x - rX);
+            Canvas.SetTop(EllClick, y - rY);
+
+            EllClick.Visibility = Visibility.Visible;
+        }
+
+        // 시작할때 마커 숨기기
+        private void HideClickMarker()
+        {
+            EllClick.Visibility = Visibility.Collapsed;
+        }
     }
 }
